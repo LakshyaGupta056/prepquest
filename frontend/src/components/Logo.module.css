@@ -1,0 +1,24 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+}
+
+.logo.lg {
+  font-size: 28px;
+}
+
+.mark {
+  display: inline-flex;
+  color: var(--color-primary);
+  font-size: 1.3em;
+}
+
+.accent {
+  color: var(--color-primary);
+}

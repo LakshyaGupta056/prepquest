@@ -1,0 +1,67 @@
+:root {
+  /* --- Color --- */
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #eef0fe;
+  --color-violet: #8b5cf6;
+
+  --color-xp: #f59e0b;
+  --color-xp-light: #fef3e2;
+
+  --color-success: #22c55e;
+  --color-success-light: #e9fbf1;
+
+  --color-danger: #ef4444;
+  --color-danger-light: #fdecec;
+
+  --color-review: #a855f7;
+  --color-review-light: #f6ecfe;
+
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-ink: #1e1b2e;
+  --color-ink-soft: #423f52;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-border-soft: #f0f1f5;
+
+  --color-not-visited: #cbd1dc;
+
+  /* --- Type --- */
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+
+  /* --- Radius --- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* --- Shadow --- */
+  --shadow-sm: 0 1px 2px rgba(30, 27, 46, 0.05), 0 1px 3px rgba(30, 27, 46, 0.06);
+  --shadow-md: 0 4px 10px rgba(30, 27, 46, 0.06), 0 2px 4px rgba(30, 27, 46, 0.05);
+  --shadow-lg: 0 16px 40px rgba(79, 70, 229, 0.14), 0 4px 12px rgba(30, 27, 46, 0.06);
+  --shadow-glow-primary: 0 0 0 4px rgba(99, 102, 241, 0.14);
+  --shadow-glow-danger: 0 0 0 4px rgba(239, 68, 68, 0.14);
+
+  /* --- Motion --- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+
+  /* --- Layout --- */
+  --max-width: 1120px;
+  --header-height: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
