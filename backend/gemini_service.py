@@ -1,14 +1,6 @@
 """
 All Gemini API calls live in this module. Nothing outside this file should
 ever touch the `google-genai` client directly.
-
-NOTE ON THE STRUCTURED-OUTPUT CALL SHAPE:
-The current `google-genai` SDK configures JSON structured output via
-`GenerateContentConfig(response_mime_type="application/json", response_schema=...)`,
-NOT a `response_format={"text": {...}}` dict. That older-looking shape isn't
-part of the SDK's public API, so this module uses the verified
-`response_mime_type` / `response_schema` pattern instead — this is the one
-part of the original spec that was adjusted to something that actually runs.
 """
 
 import os
@@ -20,24 +12,19 @@ from content_extractors import extract_docx_text
 from prompt_templates import build_generation_instructions
 from schemas import DifficultyLevel, MCQTestPaper
 
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-pro-preview")
+# FIX 1: Use the correct, incredibly fast production model
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
 
-# Lazily created so the app can still boot (e.g. for /api/health) even if
-# GEMINI_API_KEY isn't set yet in a given environment.
 _client: genai.Client | None = None
-
 
 class GeminiGenerationError(Exception):
     """Raised when Gemini fails to produce a usable test paper after retries."""
 
-
 def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        # genai.Client() reads GEMINI_API_KEY from the environment automatically.
         _client = genai.Client()
     return _client
-
 
 _DOCX_EXTENSIONS = {".docx"}
 _INLINE_MIME_TYPES = {
@@ -47,15 +34,11 @@ _INLINE_MIME_TYPES = {
     ".jpeg": "image/jpeg",
 }
 
-
 def _build_content_parts(
     pasted_text: str | None,
     uploaded_file_bytes: bytes | None,
     uploaded_file_ext: str | None,
 ) -> list:
-    """Assemble the leading `contents` parts (everything except the final
-    instruction text) from whatever study material the user supplied.
-    """
     parts: list = []
 
     if uploaded_file_bytes is not None and uploaded_file_ext is not None:
@@ -83,7 +66,6 @@ def _build_content_parts(
 
     return parts
 
-
 def generate_test(
     exam_name: str,
     difficulty: DifficultyLevel,
@@ -93,10 +75,6 @@ def generate_test(
     uploaded_file_bytes: bytes | None,
     uploaded_file_ext: str | None,
 ) -> MCQTestPaper:
-    """Call Gemini to produce a full MCQTestPaper, with one automatic retry
-    if the first attempt returns malformed JSON, a schema mismatch, or the
-    wrong question count.
-    """
     client = _get_client()
 
     content_parts = _build_content_parts(pasted_text, uploaded_file_bytes, uploaded_file_ext)
@@ -111,10 +89,9 @@ def generate_test(
     )
 
     contents = [*content_parts, instructions]
-
     last_error: Exception | None = None
 
-    for attempt in range(2):  # one initial attempt + one retry
+    for attempt in range(2): 
         try:
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
@@ -122,6 +99,8 @@ def generate_test(
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=MCQTestPaper,
+                    temperature=0.2, # FIX 2: Lower temperature for strict, predictable JSON formatting
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True), # FIX 3: Silences the SDK bug warning
                 ),
             )
 
@@ -135,10 +114,10 @@ def generate_test(
 
             return test_paper
 
-        except Exception as exc:  # noqa: BLE001 - deliberately broad, retried once
+        except Exception as exc: 
             last_error = exc
             continue
 
     raise GeminiGenerationError(
-        "Gemini failed to generate a valid test paper after a retry."
+        f"Gemini API rejected the configuration. Details: {str(last_error)}"
     ) from last_error
