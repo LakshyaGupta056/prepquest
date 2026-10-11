@@ -98,10 +98,12 @@ async def api_generate_test(
             )
 
     # --- generation ---------------------------------------------------
+  import traceback  # <-- NEW: Imports the tool to print the exact error trace
+
     try:
         test_paper: MCQTestPaper = generate_test(
             exam_name=exam_name,
-            difficulty=difficulty,  # type: ignore[arg-type]
+            difficulty=difficulty,  
             num_questions=num_questions,
             pasted_text=pasted_text,
             topic_name=topic_name,
@@ -109,22 +111,28 @@ async def api_generate_test(
             uploaded_file_ext=uploaded_file_ext,
         )
     except GeminiGenerationError as exc:
+        print("\n=== GEMINI API REJECTED THE REQUEST ===")
+        traceback.print_exc()  # <-- NEW: Prints the full error to Render logs
         return JSONResponse(
             status_code=502,
             content={
-                "error": "Couldn't generate your test — try again in a moment.",
+                # NEW: Sends the EXACT error directly to your frontend red banner!
+                "error": f"Gemini API Error: {str(exc)}", 
                 "detail": str(exc),
             },
         )
     except ValueError as exc:
-        # e.g. an unreadable .docx
+        print("\n=== FILE PROCESSING ERROR ===")
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:  # noqa: BLE001 - final safety net, never leak a stack trace
+    except Exception as exc: 
+        print("\n=== UNEXPECTED BACKEND CRASH ===")
+        traceback.print_exc()
         return JSONResponse(
             status_code=502,
             content={
-                "error": "Couldn't generate your test — try again in a moment.",
-                "detail": "Unexpected error while contacting Gemini.",
+                "error": f"System Error: {str(exc)}",
+                "detail": str(exc),
             },
         )
 
