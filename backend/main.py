@@ -7,6 +7,7 @@ Render web service — one process, one port, no separate frontend host.
 """
 
 import os
+import traceback
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -98,12 +99,10 @@ async def api_generate_test(
             )
 
     # --- generation ---------------------------------------------------
-  import traceback  # <-- NEW: Imports the tool to print the exact error trace
-
     try:
         test_paper: MCQTestPaper = generate_test(
             exam_name=exam_name,
-            difficulty=difficulty,  
+            difficulty=difficulty,  # type: ignore[arg-type]
             num_questions=num_questions,
             pasted_text=pasted_text,
             topic_name=topic_name,
@@ -112,12 +111,11 @@ async def api_generate_test(
         )
     except GeminiGenerationError as exc:
         print("\n=== GEMINI API REJECTED THE REQUEST ===")
-        traceback.print_exc()  # <-- NEW: Prints the full error to Render logs
+        traceback.print_exc()
         return JSONResponse(
             status_code=502,
             content={
-                # NEW: Sends the EXACT error directly to your frontend red banner!
-                "error": f"Gemini API Error: {str(exc)}", 
+                "error": f"Gemini API Error: {str(exc)}",
                 "detail": str(exc),
             },
         )
@@ -141,10 +139,6 @@ async def api_generate_test(
 
 # ---------------------------------------------------------------------------
 # Static frontend hosting
-#
-# The frontend is built at deploy time into frontend/dist. We serve its
-# assets directly and fall back to index.html for any non-API route so
-# React Router's client-side routes survive a hard refresh.
 # ---------------------------------------------------------------------------
 
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
